@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Rebels.ShortLink.Api.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace Rebels.ShortLink.Api.Controllers;
 
@@ -6,6 +8,15 @@ namespace Rebels.ShortLink.Api.Controllers;
 [Route("/")]
 public class ShortLinkController : ControllerBase
 {
+    private readonly IShortLinkService _shortLinkService;
+    private readonly ILogger<ShortLinkController> _logger;
+
+    public ShortLinkController(IShortLinkService shortLinkService, ILogger<ShortLinkController> logger)
+    {
+        _shortLinkService = shortLinkService;
+        _logger = logger;
+    }
+
     /// <summary>
     /// Encodes a URL to a shortened URL.
     /// </summary>
@@ -13,9 +24,27 @@ public class ShortLinkController : ControllerBase
     /// <returns>A shortened URL.</returns>
     [HttpPost("encode")]
     [ProducesResponseType(typeof(EncodeResponse), StatusCodes.Status200OK)]
-    public IActionResult Encode([FromBody] EncodeRequest request)
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult Encode([FromBody] EncodeRequest request) // Prefer to use ActionResult<T> instead of IActionResult. For instance, ActionResult<EncodeResponse> instead of IActionResult
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrEmpty(request.Url))
+        {
+            _logger.LogWarning("Encode request failed: Invalid URL");
+            return BadRequest("Invalid URL");
+        }
+
+        try
+        {
+            var response = _shortLinkService.EncodeUrl(request.Url);
+
+            return Ok(new EncodeResponse(response.Id, response.ShortUrl));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while encoding URL");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing your request");
+        }
     }
 
     /// <summary>
@@ -25,13 +54,36 @@ public class ShortLinkController : ControllerBase
     /// <returns>The original URL.</returns>
     [HttpGet("decode/{id}")]
     [ProducesResponseType(typeof(DecodeResponse), StatusCodes.Status200OK)]
-    public IActionResult Decode(string id)
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult Decode(string id) // Prefer to use ActionResult<T> instead of IActionResult. For instance, ActionResult<DecodeResponse> instead of IActionResult
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrEmpty(id))
+        {
+            _logger.LogWarning("Decode request failed: Invalid id");
+            return BadRequest("Invalid id");
+        }
+
+        try
+        {
+            var longUrl = _shortLinkService.DecodeUrlById(id);
+            if (!string.IsNullOrEmpty(longUrl))
+            {
+                return Ok(new DecodeResponse(longUrl));
+            }
+
+            _logger.LogWarning("Decode request failed: Short URL not found for id {Id}", id);
+            return NotFound("Short URL not found");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while decoding URL for id {Id}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing your request");
+        }
     }
 }
 
 // Do whatever you want with the items below, as long as the API's interface remains the same
-public record struct EncodeRequest(string Url);
+public record struct EncodeRequest([Required, Url] string Url);
 public record struct EncodeResponse(string Id, string ShortLink);
 public record struct DecodeResponse(string OriginalUrl);
