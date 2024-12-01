@@ -132,6 +132,19 @@ namespace Rebels.ShortLink.Api.Tests.Controllers
             _shortLinkServiceMock.Setup(s => s.DecodeUrlByShortUrl("http://sh.ort/123")).Returns("https://example.com");
 
             // Act
+            var result = _controller.RedirectToOriginalUrl("http://sh.ort/123");
+
+            // Assert
+            result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeEquivalentTo(new DecodeResponse("https://example.com"));
+        }
+
+        [Fact]
+        public void RedirectToOriginalUrl_ReturnsRedirect_WhenShortUrlIsFound_WithEscape()
+        {
+            // Arrange
+            _shortLinkServiceMock.Setup(s => s.DecodeUrlByShortUrl("http://sh.ort/123")).Returns("https://example.com");
+
+            // Act
             var result = _controller.RedirectToOriginalUrl("http%3A%2F%2Fsh.ort%2F123");
 
             // Assert
