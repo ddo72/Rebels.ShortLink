@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Rebels.ShortLink.Api.Services;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 
 namespace Rebels.ShortLink.Api.Controllers;
 
@@ -107,14 +106,7 @@ public class ShortLinkController : ControllerBase
             var longUrl = _shortLinkService.DecodeUrlByShortUrl(unescapeShortUrl);
             if (!string.IsNullOrEmpty(longUrl))
             {
-                // Open the default web browser and navigate to the long URL
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = longUrl,
-                    UseShellExecute = true
-                });
-
-                return Ok(new DecodeResponse(longUrl));
+                return Redirect(longUrl);
             }
 
             _logger.LogWarning("Redirect request failed: Original URL not found for '{ShortUrl}'", shortUrl);

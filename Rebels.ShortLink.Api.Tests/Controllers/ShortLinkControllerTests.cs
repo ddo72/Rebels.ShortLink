@@ -135,7 +135,7 @@ namespace Rebels.ShortLink.Api.Tests.Controllers
             var result = _controller.RedirectToOriginalUrl("http://sh.ort/123");
 
             // Assert
-            result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeEquivalentTo(new DecodeResponse("https://example.com"));
+            result.Should().BeOfType<RedirectResult>().Which.Url.Should().Be("https://example.com");
         }
 
         [Fact]
@@ -148,7 +148,7 @@ namespace Rebels.ShortLink.Api.Tests.Controllers
             var result = _controller.RedirectToOriginalUrl("http%3A%2F%2Fsh.ort%2F123");
 
             // Assert
-            result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeEquivalentTo(new DecodeResponse("https://example.com"));
+            result.Should().BeOfType<RedirectResult>().Which.Url.Should().Be("https://example.com");
         }
     }
 }
