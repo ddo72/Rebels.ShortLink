@@ -122,7 +122,7 @@ namespace Rebels.ShortLink.Api.Tests.Controllers
 
             // Assert
             result.Should().NotBeNull();
-            result!.Value.Should().Be("Short URL not found for 123");
+            result!.Value.Should().Be("Original URL not found for 123");
         }
 
         [Fact]
@@ -135,7 +135,7 @@ namespace Rebels.ShortLink.Api.Tests.Controllers
             var result = _controller.RedirectToOriginalUrl("http%3A%2F%2Fsh.ort%2F123");
 
             // Assert
-            result.Should().BeOfType<OkObjectResult>().Which.Value.Should().Be("https://example.com");
+            result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeEquivalentTo(new DecodeResponse("https://example.com"));
         }
     }
 }

@@ -84,11 +84,12 @@ public class ShortLinkController : ControllerBase
     }
 
     /// <summary>
-    /// Redirects to the original URL based on the shortened URL id.
+    /// Redirects to the original URL based on the shortened URL id. Return a longUrl
     /// </summary>
     /// <param name="id">The id of the shortened URL.</param>
     /// <returns>A redirection to the original URL.</returns>
     [HttpGet("RedirectToOriginalUrl/{shortUrl}")]
+    [ProducesResponseType(typeof(DecodeResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -113,15 +114,15 @@ public class ShortLinkController : ControllerBase
                     UseShellExecute = true
                 });
 
-                return Ok(longUrl);
+                return Ok(new DecodeResponse(longUrl));
             }
 
-            _logger.LogWarning("Redirect request failed: Short URL not found '{ShortUrl}'", shortUrl);
-            return NotFound($"Short URL not found for {shortUrl}");
+            _logger.LogWarning("Redirect request failed: Original URL not found for '{ShortUrl}'", shortUrl);
+            return NotFound($"Original URL not found for {shortUrl}");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while redirecting URL for id {ShortUrl}", shortUrl);
+            _logger.LogError(ex, "Error occurred while redirecting URL for {ShortUrl}", shortUrl);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing your request");
         }
     }
