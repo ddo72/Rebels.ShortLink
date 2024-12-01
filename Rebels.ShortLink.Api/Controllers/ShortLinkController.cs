@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Rebels.ShortLink.Api.Services;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Rebels.ShortLink.Api.Controllers;
 
@@ -78,6 +79,49 @@ public class ShortLinkController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while decoding URL for id {Id}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing your request");
+        }
+    }
+
+    /// <summary>
+    /// Redirects to the original URL based on the shortened URL id.
+    /// </summary>
+    /// <param name="id">The id of the shortened URL.</param>
+    /// <returns>A redirection to the original URL.</returns>
+    [HttpGet("RedirectToOriginalUrl/{shortUrl}")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult RedirectToOriginalUrl(string shortUrl)
+    {
+        if (string.IsNullOrEmpty(shortUrl))
+        {
+            _logger.LogWarning("Redirect request failed: Invalid shortUrl");
+            return BadRequest("Invalid shortUrl");
+        }
+
+        try
+        {
+            var unescapeShortUrl = Uri.UnescapeDataString(shortUrl);
+            var longUrl = _shortLinkService.DecodeUrlByShortUrl(unescapeShortUrl);
+            if (!string.IsNullOrEmpty(longUrl))
+            {
+                // Open the default web browser and navigate to the long URL
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = longUrl,
+                    UseShellExecute = true
+                });
+
+                return Ok(longUrl);
+            }
+
+            _logger.LogWarning("Redirect request failed: Short URL not found '{ShortUrl}'", shortUrl);
+            return NotFound($"Short URL not found for {shortUrl}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while redirecting URL for id {ShortUrl}", shortUrl);
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing your request");
         }
     }
