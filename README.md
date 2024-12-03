@@ -2,6 +2,9 @@
 Short URL is a URL shortening service where you enter a URL such as https://rebels.io/about-us and 
 it returns a short URL such as http://sh.ort/GeAi9K
 
+## Design choice
+In this assignment, I used a dictionary to store the original URLs and their corresponding short URLs for simplicity and speed. However, if we plan to save the data to a database, we can create a model that includes an Id (GUID), OriginalUrl, and ShortUrl, and place it in the Models folder. This is not required as per the current requirements. 
+
 ## Run API
 dotnet run --project Rebels.ShortLink.Api
 
